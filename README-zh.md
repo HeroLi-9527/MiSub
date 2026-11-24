@@ -301,6 +301,23 @@ MiSub 默认使用内置转换器将订阅内容转换为目标格式，并支�
 - 不支持的目标格式会回退为 `base64`。
 - 若在设置或订阅组中启用第三方转换，MiSub 会先完成节点预处理，再将节点交给第三方后端输出目标格式。
 
+### INI 规则前置追加
+
+Clash 完整 YAML 基础模板与 INI 规则模板组合时，可使用 `[Rule Prepend]` 在基础 YAML 的 `rules` 前插入少量高优先级规则，无需复制整份基础规则。
+
+```ini
+[Rule Prepend]
+DOMAIN-SUFFIX,antigravity.google,Antigravity
+DOMAIN-SUFFIX,gemini.google.com,Gemini
+```
+
+行为说明：
+
+- 只有 `[Rule Prepend]`：前置规则插入基础 YAML 原有规则之前，基础规则完整保留。
+- 同时存在 `[Rule Prepend]` 和 `[Rule]`：前置规则排在 `[Rule]` 规则之前；`[Rule]` 仍按原行为整体替换基础 YAML 规则。
+- 只有 `[Rule]`：保持原有整体替换行为。
+- 该能力用于 Clash 完整 YAML + INI overlay 合并场景，不改变普通 INI 模板的规则渲染顺序。
+
 ### 远端模板占位符
 
 如果你在 `transformConfig` 中使用远端模板，可以在模板里放入以下占位符：
