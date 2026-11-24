@@ -10,6 +10,7 @@ export function createUnifiedTemplateModel(input = {}) {
         },
         proxies: Array.isArray(input.proxies) ? input.proxies : [],
         groups: Array.isArray(input.groups) ? input.groups : [],
+        rulesPrepend: Array.isArray(input.rulesPrepend) ? input.rulesPrepend : [],
         rules: Array.isArray(input.rules) ? input.rules : [],
         settings: {
             managedConfigUrl: input.settings?.managedConfigUrl || '',
