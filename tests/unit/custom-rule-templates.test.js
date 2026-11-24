@@ -205,4 +205,66 @@ rule-providers:
         expect(parsed['rule-providers'].BASE.url).toBe('https://example.com/base.yaml');
         expect(parsed['proxy-providers']).toBeUndefined();
     });
+
+    it('prepends Rule Prepend entries before base rules and before explicit Rule entries', async () => {
+        const baseTemplate = `
+mixed-port: 7890
+proxies: []
+proxy-groups:
+  - name: Base
+    type: select
+    proxies:
+      - DIRECT
+rules:
+  - DOMAIN-SUFFIX,base.example,Base
+  - MATCH,Base
+`;
+        const render = async (iniContent) => {
+            const storageAdapter = createMemoryStorage({
+                misub_rule_templates_v1: [{
+                    id: 'tpl-prepend',
+                    name: 'Rule Prepend',
+                    type: 'ini',
+                    content: iniContent,
+                }],
+            });
+            vi.stubGlobal('fetch', vi.fn(async () => new Response(baseTemplate, { status: 200 })));
+            const result = await ProcessorService.renderOutput({
+                targetFormat: 'clash',
+                combinedNodeList: NODE_LIST,
+                subName: 'RulePrepend',
+                config: { UpdateInterval: 86400, clashBaseTemplateUrl: 'https://example.com/base.yaml' },
+                builtinOptions: { ruleLevel: 'none', enableUdp: true, skipCertVerify: false },
+                templateSource: { kind: 'custom', value: 'tpl-prepend' },
+                storageAdapter,
+            });
+            return yaml.load(result.content).rules;
+        };
+
+        const withBaseRules = await render([
+            '[Rule Prepend]',
+            'DOMAIN-SUFFIX,antigravity.google,Antigravity',
+            'DOMAIN-SUFFIX,gemini.google.com,Gemini',
+        ].join('\\n'));
+        expect(withBaseRules).toEqual([
+            'DOMAIN-SUFFIX,antigravity.google,Antigravity',
+            'DOMAIN-SUFFIX,gemini.google.com,Gemini',
+            'DOMAIN-SUFFIX,base.example,Base',
+            'MATCH,Base',
+        ]);
+
+        const withExplicitRules = await render([
+            '[Rule Prepend]',
+            'DOMAIN-SUFFIX,antigravity.google,Antigravity',
+            '',
+            '[Rule]',
+            'DOMAIN-SUFFIX,custom.example,Custom',
+            'MATCH,Custom',
+        ].join('\\n'));
+        expect(withExplicitRules).toEqual([
+            'DOMAIN-SUFFIX,antigravity.google,Antigravity',
+            'DOMAIN-SUFFIX,custom.example,Custom',
+            'MATCH,Custom',
+        ]);
+    });
 });
