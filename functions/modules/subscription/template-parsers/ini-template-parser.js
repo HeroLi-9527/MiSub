@@ -216,6 +216,9 @@ export function parseIniTemplate(templateText, options = {}) {
         .map(parseGroupLine)
         .filter(Boolean)
         .concat(parsedAclGroups, parsedAppendGroups);
+    const rulesPrepend = (sections.get('rule prepend') || [])
+        .map(parseRuleLine)
+        .filter(Boolean);
     const rules = (sections.get('rule') || [])
         .map(parseRuleLine)
         .filter(Boolean)
@@ -233,6 +236,7 @@ export function parseIniTemplate(templateText, options = {}) {
         },
         proxies: options.proxies || [],
         groups,
+        rulesPrepend,
         rules,
         settings: {
             managedConfigUrl: options.managedConfigUrl || '',
