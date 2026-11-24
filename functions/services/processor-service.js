@@ -286,6 +286,7 @@ export function renderClashYamlWithIniOverlay(
             .map((group) => group.name)
     );
     const hasExplicitRules = iniModel.rules.length > 0;
+    const prependRuleCount = iniModel.rulesPrepend.length;
 
     // The base YAML owns its DNS and rules unless the INI explicitly defines rules.
     // Disable automatic rule/group injection for the overlay pass.
@@ -309,8 +310,11 @@ export function renderClashYamlWithIniOverlay(
         overlayGroups,
         appendGroupNames
     );
-    const overlayRules =
-        hasExplicitRules && Array.isArray(overlayConfig.rules) ? overlayConfig.rules : [];
+    const renderedOverlayRules = Array.isArray(overlayConfig.rules) ? overlayConfig.rules : [];
+    const prependedRules = renderedOverlayRules.slice(0, prependRuleCount);
+    const overlayRules = hasExplicitRules
+        ? renderedOverlayRules.slice(prependRuleCount)
+        : [];
     const mergedProxies = mergeClashProxyLists(
         baseConfig.proxies,
         overlayConfig.proxies,
@@ -334,7 +338,9 @@ export function renderClashYamlWithIniOverlay(
         ...baseConfig,
         proxies: mergedProxies,
         'proxy-groups': mergedGroups,
-        rules: overlayRules.length > 0 ? overlayRules : baseConfig.rules,
+        rules: hasExplicitRules
+            ? [...prependedRules, ...overlayRules]
+            : [...prependedRules, ...(Array.isArray(baseConfig.rules) ? baseConfig.rules : [])],
     };
 
     if (Object.keys(mergedRuleProviders).length > 0) {
