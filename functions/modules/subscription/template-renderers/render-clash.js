@@ -176,6 +176,8 @@ export function renderClashFromTemplateModel(model) {
     const ruleProviderMap = new Map();
     let providerCounter = 0;
 
+    const allRules = [...normalizedModel.rulesPrepend, ...normalizedModel.rules];
+
     normalizedModel.rules.forEach((rule) => {
         const type = String(rule.type || '').toUpperCase();
         if (type !== 'RULE-SET' || !rule.value || !/^https?:\/\//i.test(rule.value)) return;
@@ -243,7 +245,7 @@ export function renderClashFromTemplateModel(model) {
                 };
             }),
         'rule-providers': Object.keys(ruleProviders).length > 0 ? ruleProviders : undefined,
-        rules: normalizedModel.rules
+        rules: allRules
             .map((rule) => {
                 if (String(rule.type || '').toUpperCase() !== 'RULE-SET' || !rule.value) {
                     return mapRule(rule, ruleProviderMap);
